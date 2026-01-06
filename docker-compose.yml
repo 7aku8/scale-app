@@ -1,0 +1,32 @@
+services:
+  timescaledb:
+    container_name: scale-db
+    image: timescale/timescaledb-ha:pg18-all
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_PASSWORD: mypassword
+      POSTGRES_DB: poultry_db
+    volumes:
+      - scale_db_data:/var/lib/postgresql/data
+
+  redis:
+    container_name: scale-cache
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+  mqtt:
+    container_name: scale-mqtt
+    image: eclipse-mosquitto:2.0.22
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+
+volumes:
+  scale_db_data:
