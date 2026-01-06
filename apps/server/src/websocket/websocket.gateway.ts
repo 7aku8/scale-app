@@ -11,7 +11,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger, UseGuards } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { WsAuthGuard } from '../auth/guards/ws-auth.guard';
 import { ScalesService } from '../scales/scales.service';
 import { JoinRoomDto } from './dto/join-room.dto';
 
@@ -70,7 +69,6 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
     this.logger.log(`Client ${client.id} disconnected`);
   }
 
-  @UseGuards(WsAuthGuard)
   @SubscribeMessage('join-org-room')
   async handleJoinOrgRoom(@ConnectedSocket() client: AuthenticatedSocket) {
     const organizationId = client.data.organizationId;
@@ -87,7 +85,6 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
     return { success: true, room: roomName };
   }
 
-  @UseGuards(WsAuthGuard)
   @SubscribeMessage('join-scale-room')
   async handleJoinScaleRoom(
     @ConnectedSocket() client: AuthenticatedSocket,
@@ -114,7 +111,6 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
     return { success: true, room: roomName };
   }
 
-  @UseGuards(WsAuthGuard)
   @SubscribeMessage('leave-scale-room')
   async handleLeaveScaleRoom(
     @ConnectedSocket() client: AuthenticatedSocket,

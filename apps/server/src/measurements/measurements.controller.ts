@@ -10,10 +10,8 @@ import {
 import { MeasurementsService } from './measurements.service';
 import { CreateMeasurementDto } from './dto/create-measurement.dto';
 import { QueryMeasurementsDto } from './dto/query-measurements.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('measurements')
-@UseGuards(JwtAuthGuard)
 export class MeasurementsController {
   constructor(private readonly measurementsService: MeasurementsService) {}
 

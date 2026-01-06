@@ -1,6 +1,9 @@
+import dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+
+dotenv.config();
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
@@ -10,9 +13,9 @@ async function bootstrap() {
   });
 
   // Set global prefix for all routes except health checks
-  // app.setGlobalPrefix('api', {
-  //   exclude: ['health'],
-  // });
+  app.setGlobalPrefix('api', {
+    exclude: ['health'],
+  });
 
   // Enable CORS
   app.enableCors({

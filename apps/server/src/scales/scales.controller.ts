@@ -2,10 +2,8 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Query, Pa
 import { ScalesService } from './scales.service';
 import { CreateScaleDto } from './dto/create-scale.dto';
 import { UpdateScaleDto } from './dto/update-scale.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
 @Controller('scales')
-@UseGuards(JwtAuthGuard)
 export class ScalesController {
   constructor(private readonly scalesService: ScalesService) {}
 
