@@ -1,17 +1,19 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OnEvent } from '@nestjs/event-emitter';
-import { EventEmitter2 } from '@nestjs/event-emitter';
+import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { ScalesService } from '../../scales/scales.service';
 import { MeasurementsService } from '../../measurements/measurements.service';
+import { IsNotEmpty, IsString } from 'class-validator';
+import { plainToInstance } from 'class-transformer';
 
 interface MqttMessage {
   topic: string;
   payload: string;
 }
 
-interface WeightPayload {
+class WeightPayload {
+  @IsString()
+  @IsNotEmpty()
   weight: number;
-  timestamp?: string;
 }
 
 @Injectable()
@@ -27,6 +29,8 @@ export class WeightMessageProcessor {
   @OnEvent('mqtt.message')
   async handleMessage(message: MqttMessage): Promise<void> {
     const { topic, payload } = message;
+
+    this.logger.debug(`Processing MQTT message on topic: ${topic}`);
 
     // Only process weight measurements
     if (!topic.includes('/weight')) {
@@ -60,7 +64,7 @@ export class WeightMessageProcessor {
         scaleId: scale.id,
         organizationId: scale.organizationId,
         weight: weightData.weight,
-        time: weightData.timestamp,
+        time: new Date(),
         isValid: true,
       });
 
@@ -75,7 +79,10 @@ export class WeightMessageProcessor {
         measurement,
       });
     } catch (error) {
-      this.logger.error(`Failed to process message: ${error.message}`, error.stack);
+      this.logger.error(
+        `Failed to process message: ${error.message}`,
+        error.stack,
+      );
     }
   }
 
@@ -90,16 +97,7 @@ export class WeightMessageProcessor {
 
   private parsePayload(payload: string): WeightPayload | null {
     try {
-      const data = JSON.parse(payload);
-
-      if (typeof data.weight !== 'number') {
-        return null;
-      }
-
-      return {
-        weight: data.weight,
-        timestamp: data.timestamp,
-      };
+      return plainToInstance(WeightPayload, JSON.parse(payload));
     } catch (error) {
       this.logger.error(`Failed to parse payload: ${error.message}`);
       return null;

@@ -1,8 +1,27 @@
-import { Bird, LayoutDashboard, Settings, Sprout } from "lucide-react";
+"use client";
+
+import { Bird, LayoutDashboard, Settings, Sprout, LogOut } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await authClient.signOut();
+      router.push("/auth");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      setLoggingOut(false);
+    }
+  };
+
   return (
     <div className="grid min-h-screen w-full lg:grid-cols-[280px_1fr]">
       {/* Sidebar (Desktop) */}
@@ -48,7 +67,15 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="w-full flex-1">
             <h1 className="text-lg font-semibold">Panel Główny</h1>
           </div>
-          <Button variant="outline" size="sm">Wyloguj</Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleLogout}
+            disabled={loggingOut}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            {loggingOut ? "Wylogowywanie..." : "Wyloguj"}
+          </Button>
         </header>
         <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-6">
           {children}

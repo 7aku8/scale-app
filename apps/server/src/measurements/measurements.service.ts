@@ -37,7 +37,9 @@ export class MeasurementsService {
     }
 
     if (query.organizationId) {
-      conditions.push(eq(weightMeasurements.organizationId, query.organizationId));
+      conditions.push(
+        eq(weightMeasurements.organizationId, query.organizationId),
+      );
     }
 
     if (query.startTime) {

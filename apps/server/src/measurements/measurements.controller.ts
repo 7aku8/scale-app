@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { MeasurementsService } from './measurements.service';
 import { CreateMeasurementDto } from './dto/create-measurement.dto';
 import { QueryMeasurementsDto } from './dto/query-measurements.dto';
@@ -25,7 +33,10 @@ export class MeasurementsController {
   }
 
   @Get('scales/:scaleId/aggregated')
-  getAggregated(@Param('scaleId') scaleId: string, @Query('interval') interval?: '1h' | '1d' | '1w') {
+  getAggregated(
+    @Param('scaleId') scaleId: string,
+    @Query('interval') interval?: '1h' | '1d' | '1w',
+  ) {
     return this.measurementsService.getAggregated(scaleId, interval);
   }
 }

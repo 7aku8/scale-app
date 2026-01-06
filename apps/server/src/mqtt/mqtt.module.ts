@@ -9,7 +9,11 @@ import { MeasurementsModule } from '../measurements/measurements.module';
 
 @Global()
 @Module({
-  imports: [ConfigModule.forFeature(mqttConfig), ScalesModule, MeasurementsModule],
+  imports: [
+    ConfigModule.forFeature(mqttConfig),
+    ScalesModule,
+    MeasurementsModule,
+  ],
   providers: [MqttClientProvider, MqttService, WeightMessageProcessor],
   exports: [MqttService],
 })

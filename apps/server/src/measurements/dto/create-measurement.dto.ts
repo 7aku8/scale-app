@@ -1,4 +1,5 @@
-import { IsUUID, IsNumber, IsInt, IsBoolean, IsOptional, IsDateString } from 'class-validator';
+import { IsUUID, IsNumber, IsInt, IsBoolean, IsOptional, IsDateString, IsDate } from 'class-validator';
+import { Type } from "class-transformer";
 
 export class CreateMeasurementDto {
   @IsUUID()
@@ -14,7 +15,8 @@ export class CreateMeasurementDto {
   @IsOptional()
   isValid?: boolean;
 
-  @IsDateString()
+  @Type(() => Date)
+  @IsDate()
   @IsOptional()
-  time?: string;
+  time?: Date;
 }

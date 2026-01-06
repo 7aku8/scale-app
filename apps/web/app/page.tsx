@@ -6,16 +6,32 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { Activity, Thermometer } from "lucide-react";
+import { getAuthToken } from "@/lib/auth-client";
 
-// Tymczasowy fetcher (później podmienisz na realny URL)
 const fetchMeasurements = async () => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/measurements`);
-    if (!res.ok) throw new Error("Network error");
+    const token = await getAuthToken();
+
+    if (!token) {
+      console.error("No authentication token available");
+      return [];
+    }
+
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/measurements`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      console.error("Failed to fetch measurements:", res.status, res.statusText);
+      return [];
+    }
+
     return res.json();
   } catch (e) {
-    console.error(e);
-    return []; // Zwróć pustą tablicę przy błędzie, żeby nie wywaliło apki
+    console.error("Error fetching measurements:", e);
+    return [];
   }
 };
 

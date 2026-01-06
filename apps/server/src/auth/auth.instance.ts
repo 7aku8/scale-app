@@ -29,8 +29,11 @@ export const auth = betterAuth({
     updateAge: 60 * 60 * 24, // 1 day
   },
   secret: process.env.BETTER_AUTH_SECRET,
-  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:3000',
-  trustedOrigins: [process.env.BETTER_AUTH_URL || 'http://localhost:3000'],
+  baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:4000/api',
+  trustedOrigins: [
+    process.env.BETTER_AUTH_URL || 'http://localhost:4000/api',
+    process.env.CORS_ORIGIN || 'http://localhost:3000',
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session.session;

@@ -7,8 +7,10 @@ export const MQTT_CLIENT = 'MQTT_CLIENT';
 export const MqttClientProvider: Provider = {
   provide: MQTT_CLIENT,
   useFactory: (configService: ConfigService) => {
-    const brokerUrl = configService.get<string>('mqtt.brokerUrl') || 'mqtt://localhost:1883';
-    const clientId = configService.get<string>('mqtt.clientId') || 'nestjs-poultry-server';
+    const brokerUrl =
+      configService.get<string>('mqtt.brokerUrl') || 'mqtt://localhost:1883';
+    const clientId =
+      configService.get<string>('mqtt.clientId') || 'nestjs-poultry-server';
     const username = configService.get<string>('mqtt.username');
     const password = configService.get<string>('mqtt.password');
 
