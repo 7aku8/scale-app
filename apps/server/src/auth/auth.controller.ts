@@ -9,7 +9,6 @@ import type { Request, Response } from 'express';
 export class AuthController {
   @All('*path')
   async handleRequest(@Req() req: Request, @Res() res: Response) {
-    console.log('BetterAuth Request:', req.method, req.originalUrl, req.url);
     return toNodeHandler(auth())(req, res);
   }
 

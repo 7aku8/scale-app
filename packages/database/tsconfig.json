@@ -1,6 +1,6 @@
 {
+    "extends": "../typescript-config/base.json",
     "compilerOptions": {
-        "allowImportingTsExtensions": true,
         "target": "ES2022",
         "module": "NodeNext",
         "moduleResolution": "NodeNext",

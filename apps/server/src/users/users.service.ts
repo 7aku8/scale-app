@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { eq } from 'drizzle-orm';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 import { users } from '@repo/database';
@@ -12,11 +12,18 @@ export class UsersService {
   ) {}
 
   async findByOrganization(organizationId: number) {
-    return await this.db.select().from(users).where(eq(users.organizationId, organizationId));
+    return await this.db
+      .select()
+      .from(users)
+      .where(eq(users.organizationId, organizationId));
   }
 
   async findOne(id: string) {
-    const [user] = await this.db.select().from(users).where(eq(users.id, id)).limit(1);
+    const [user] = await this.db
+      .select()
+      .from(users)
+      .where(eq(users.id, id))
+      .limit(1);
     return user || null;
   }
 }

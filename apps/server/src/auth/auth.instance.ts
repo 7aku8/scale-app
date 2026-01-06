@@ -2,6 +2,7 @@ import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import * as schema from '@repo/database';
 import { db } from '@repo/database';
+import { randomUUID } from 'crypto';
 
 export const auth = () =>
   betterAuth({
@@ -43,6 +44,11 @@ export const auth = () =>
       process.env.BETTER_AUTH_URL || 'http://localhost:4000',
       process.env.CORS_ORIGIN || 'http://localhost:3000',
     ],
+    advanced: {
+      database: {
+        generateId: () => randomUUID(),
+      },
+    },
   });
 
 // export type User = typeof auth.$Infer.Session.user;
