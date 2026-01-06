@@ -8,6 +8,20 @@
       "when": 1767567108922,
       "tag": "0000_clear_warlock",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1767740643051,
+      "tag": "0001_normal_miek",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767740693870,
+      "tag": "0002_skinny_terrax",
+      "breakpoints": true
     }
   ]
 }

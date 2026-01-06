@@ -23,7 +23,7 @@ export const auth = () =>
     }),
     emailAndPassword: {
       enabled: true,
-      requireEmailVerification: false, // Set to true in production
+      requireEmailVerification: false,
     },
     socialProviders: {
       google: {
