@@ -1,102 +1,132 @@
-import Image, { type ImageProps } from "next/image";
-import { Button } from "@repo/ui/button";
-import styles from "./page.module.css";
+"use client";
 
-type Props = Omit<ImageProps, "src"> & {
-  srcLight: string;
-  srcDark: string;
-};
+import { DashboardLayout } from "@/components/layout/dashboard-layout";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
+import { Activity, Thermometer } from "lucide-react";
 
-const ThemeImage = (props: Props) => {
-  const { srcLight, srcDark, ...rest } = props;
-
-  return (
-    <>
-      <Image {...rest} src={srcLight} className="imgLight" />
-      <Image {...rest} src={srcDark} className="imgDark" />
-    </>
-  );
+// Tymczasowy fetcher (później podmienisz na realny URL)
+const fetchMeasurements = async () => {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/measurements`);
+    if (!res.ok) throw new Error("Network error");
+    return res.json();
+  } catch (e) {
+    console.error(e);
+    return []; // Zwróć pustą tablicę przy błędzie, żeby nie wywaliło apki
+  }
 };
 
 export default function Home() {
-  return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <ThemeImage
-          className={styles.logo}
-          srcLight="turborepo-dark.svg"
-          srcDark="turborepo-light.svg"
-          alt="Turborepo logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            Get started by editing <code>apps/web/app/page.tsx</code>
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+  const { data: rawData, isLoading } = useQuery({
+    queryKey: ["measurements"],
+    queryFn: fetchMeasurements,
+    refetchInterval: 5000,
+  });
 
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new/clone?demo-description=Learn+to+implement+a+monorepo+with+a+two+Next.js+sites+that+has+installed+three+local+packages.&demo-image=%2F%2Fimages.ctfassets.net%2Fe5382hct74si%2F4K8ZISWAzJ8X1504ca0zmC%2F0b21a1c6246add355e55816278ef54bc%2FBasic.png&demo-title=Monorepo+with+Turborepo&demo-url=https%3A%2F%2Fexamples-basic-web.vercel.sh%2F&from=templates&project-name=Monorepo+with+Turborepo&repository-name=monorepo-turborepo&repository-url=https%3A%2F%2Fgithub.com%2Fvercel%2Fturborepo%2Ftree%2Fmain%2Fexamples%2Fbasic&root-directory=apps%2Fdocs&skippable-integrations=1&teamSlug=vercel&utm_source=create-turbo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://turborepo.com/docs?utm_source"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-        <Button appName="web" className={styles.secondary}>
-          Open alert
-        </Button>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://vercel.com/templates?search=turborepo&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://turborepo.com?utm_source=create-turbo"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to turborepo.com →
-        </a>
-      </footer>
-    </div>
+  const chartData = rawData?.map((item: any) => ({
+    ...item,
+    // Formatujemy godzinę dla osi X
+    timeFormatted: format(new Date(item.time), "HH:mm"),
+  })).reverse() || [];
+
+  const currentWeight = rawData?.[0]?.weight ?? 0;
+  // Oblicz zmianę (prosty mock, w przyszłości policzysz to na backendzie)
+  const previousWeight = rawData?.[1]?.weight ?? currentWeight;
+  const trend = currentWeight - previousWeight;
+
+  return (
+    <DashboardLayout>
+      {/* KARTY KPI */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Średnia Waga</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{currentWeight} kg</div>
+            <p className={`text-xs ${trend >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+              {trend > 0 ? '+' : ''}{trend.toFixed(2)} kg od ostatniego pomiaru
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="shadow-sm">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Temperatura</CardTitle>
+            <Thermometer className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">24.5°C</div>
+            <p className="text-xs text-muted-foreground">W normie</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* GŁÓWNY WYKRES */}
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+        <Card className="col-span-1 shadow-md">
+          <CardHeader>
+            <CardTitle>Przyrost dobowy</CardTitle>
+            <CardDescription>
+              Wizualizacja trendu wagi w ciągu ostatnich godzin.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pl-2">
+            <div className="h-[350px] w-full">
+              {isLoading ? (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  Ładowanie danych...
+                </div>
+              ) : chartData.length === 0 ? (
+                <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
+                  Brak danych z wagi. Podłącz urządzenie.
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorWeight" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#0f172a" stopOpacity={0.8}/>
+                        <stop offset="95%" stopColor="#0f172a" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <XAxis
+                      dataKey="timeFormatted"
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      stroke="#888888"
+                      fontSize={12}
+                      tickLine={false}
+                      axisLine={false}
+                      tickFormatter={(value) => `${value}kg`}
+                      domain={['auto', 'auto']} // Skalowanie auto
+                    />
+                    <Tooltip
+                      contentStyle={{ backgroundColor: 'white', borderRadius: '8px', border: '1px solid #e2e8f0' }}
+                    />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <Area
+                      type="monotone"
+                      dataKey="weight"
+                      stroke="#0f172a"
+                      fillOpacity={1}
+                      fill="url(#colorWeight)"
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    </DashboardLayout>
   );
 }
