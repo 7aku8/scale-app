@@ -1,16 +1,18 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe, Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    bodyParser: false,
+  });
 
   // Set global prefix for all routes except health checks
-  app.setGlobalPrefix('api', {
-    exclude: ['health'],
-  });
+  // app.setGlobalPrefix('api', {
+  //   exclude: ['health'],
+  // });
 
   // Enable CORS
   app.enableCors({

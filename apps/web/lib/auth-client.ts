@@ -1,7 +1,9 @@
 import { createAuthClient } from "better-auth/client";
 
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000/api",
+  baseURL:
+    `${process.env.NEXT_PUBLIC_API_URL}/auth` ||
+    "http://localhost:4000/api/auth",
 });
 
 export async function getAuthToken(): Promise<string | null> {

@@ -1,20 +1,11 @@
-import { All, Controller, Req, Res, Get, UseGuards } from '@nestjs/common';
-import type { Request, Response } from 'express';
-import { auth } from './auth.instance';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
-import { CurrentUser } from './decorators/current-user.decorator';
-import type { User } from './auth.instance';
+import { Controller, Get } from '@nestjs/common';
+import type { UserSession } from '@thallesp/nestjs-better-auth';
+import { Session } from '@thallesp/nestjs-better-auth';
 
-@Controller('auth')
+@Controller('authentication')
 export class AuthController {
-  @All('*')
-  async handleAuth(@Req() req: Request, @Res() res: Response) {
-    return auth.handler(req as any);
-  }
-
   @Get('session')
-  @UseGuards(JwtAuthGuard)
-  async getSession(@CurrentUser() user: User) {
-    return { user };
+  getSession(@Session() session: UserSession) {
+    return session;
   }
 }
