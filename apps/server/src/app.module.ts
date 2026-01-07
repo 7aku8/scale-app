@@ -1,17 +1,21 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
-import { DatabaseModule } from './database.module';
+import { DatabaseModule, DB_CONNECTION } from './database.module';
 import { OrganizationsModule } from './organizations/organizations.module';
 import { UsersModule } from './users/users.module';
 import { ScalesModule } from './scales/scales.module';
 import { MeasurementsModule } from './measurements/measurements.module';
 import { MqttModule } from './mqtt/mqtt.module';
 import { WebSocketModule } from './websocket/websocket.module';
-import { AuthModule } from './auth/auth.module';
+import { AuthModule as MyAuthModule } from './auth/auth.module';
+import { AdminModule } from './admin/admin.module';
+import { AuthModule } from '@thallesp/nestjs-better-auth';
+import { auth } from './auth/auth.instance';
+import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
 @Module({
   imports: [
@@ -19,15 +23,23 @@ import { AuthModule } from './auth/auth.module';
       isGlobal: true,
       load: [configuration],
     }),
-    EventEmitterModule.forRoot(),
-    AuthModule,
     DatabaseModule,
+    EventEmitterModule.forRoot(),
+    AuthModule.forRootAsync({
+      imports: [DatabaseModule],
+      useFactory: (database: PostgresJsDatabase, config: ConfigService) => ({
+        auth: auth(database, config),
+      }),
+      inject: [DB_CONNECTION, ConfigService],
+    }),
+    MyAuthModule,
     OrganizationsModule,
     UsersModule,
     ScalesModule,
     MeasurementsModule,
     MqttModule,
     WebSocketModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

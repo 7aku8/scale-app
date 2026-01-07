@@ -26,7 +26,7 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   organizationId: integer("organization_id").references(() => organizations.id),
-  role: text("role").default("viewer"), // 'admin', 'viewer'
+  role: text("role").default("user"), // 'admin', 'user', 'viewer'
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
@@ -77,6 +77,9 @@ export const scales = pgTable("scales", {
   id: uuid("id").defaultRandom().primaryKey(),
   macAddress: text("mac_address").unique().notNull(), // Unikalny identyfikator sprzętu
   name: text("name"),
+
+  secretToken: text('secret_token').notNull(),
+
   organizationId: integer("organization_id")
     .references(() => organizations.id)
     .notNull(),

@@ -1,23 +1,43 @@
 import { NestFactory } from '@nestjs/core';
 import { Logger, ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
+import { AuthService } from '@thallesp/nestjs-better-auth';
+import { toNodeHandler } from 'better-auth/node';
+import express from 'express';
+import { NestExpressApplication } from '@nestjs/platform-express';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
 
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
-  });
-
-  // Set global prefix for all routes except health checks
-  app.setGlobalPrefix('api', {
-    exclude: ['health'],
   });
 
   // Enable CORS
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
+  });
+
+  // BEGIN - BetterAuth workaround
+  const expressApp = app.getHttpAdapter().getInstance();
+
+  // Access BetterAuth instance from AuthService
+  const authService = app.get<AuthService>(AuthService);
+
+  // Mount BetterAuth before body parsers
+  expressApp.all(
+    /^\/api\/auth\/.*/,
+    toNodeHandler(authService.instance.handler),
+  );
+
+  // Re-enable Nest's JSON body parser AFTER mounting BetterAuth
+  expressApp.use(express.json());
+  // END - BetterAuth workaround
+
+  // Set global prefix for all routes except health checks
+  app.setGlobalPrefix('api', {
+    exclude: ['health'],
   });
 
   // Enable validation pipes

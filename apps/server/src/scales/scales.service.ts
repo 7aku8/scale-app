@@ -25,6 +25,7 @@ export class ScalesService {
       .values({
         macAddress: createDto.macAddress,
         name: createDto.name,
+        secretToken: '',
         organizationId: createDto.organizationId,
       })
       .returning();

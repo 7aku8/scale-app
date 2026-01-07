@@ -1,54 +1,61 @@
-import { betterAuth } from 'better-auth';
+import { betterAuth, BetterAuthOptions } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
 import * as schema from '@repo/database';
-import { db } from '@repo/database';
 import { randomUUID } from 'crypto';
+import { ConfigService } from '@nestjs/config';
+import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
 
-export const auth = () =>
-  betterAuth({
-    logger: {
-      disabled: false,
-      log: console.log,
-      level: 'debug',
+export const authConfig = (
+  database: PostgresJsDatabase,
+  config: ConfigService,
+): BetterAuthOptions => ({
+  logger: {
+    disabled: false,
+    level: 'debug',
+  },
+  basePath: '/api/auth',
+  appName: 'drobit',
+  database: drizzleAdapter(database, {
+    provider: 'pg',
+    schema: {
+      user: schema.users,
+      session: schema.sessions,
+      account: schema.accounts,
+      verification: schema.verifications,
     },
-    appName: 'drobit',
-    database: drizzleAdapter(db, {
-      provider: 'pg',
-      schema: {
-        user: schema.users,
-        session: schema.sessions,
-        account: schema.accounts,
-        verification: schema.verifications,
-      },
-    }),
-    emailAndPassword: {
-      enabled: true,
-      requireEmailVerification: false,
+  }),
+  emailAndPassword: {
+    enabled: true,
+    requireEmailVerification: false,
+  },
+  socialProviders: {
+    google: {
+      clientId: config.get<string>('GOOGLE_CLIENT_ID') || '',
+      clientSecret: config.get<string>('GOOGLE_CLIENT_SECRET') || '',
+      enabled: !!(
+        config.get<string>('GOOGLE_CLIENT_ID') &&
+        config.get<string>('GOOGLE_CLIENT_SECRET')
+      ),
     },
-    socialProviders: {
-      google: {
-        clientId: process.env.GOOGLE_CLIENT_ID || '',
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
-        enabled: !!(
-          process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
-        ),
-      },
+  },
+  session: {
+    expiresIn: 60 * 60 * 24 * 7, // 7 days
+    updateAge: 60 * 60 * 24, // 1 day
+  },
+  secret: config.get<string>('BETTER_AUTH_SECRET') || randomUUID(),
+  baseURL: config.get<string>('BETTER_AUTH_URL'),
+  trustedOrigins: [
+    config.get<string>('CORS_ORIGIN') || '',
+    config.get<string>('BETTER_AUTH_URL') || '',
+  ],
+  advanced: {
+    database: {
+      generateId: () => randomUUID(),
     },
-    session: {
-      expiresIn: 60 * 60 * 24 * 7, // 7 days
-      updateAge: 60 * 60 * 24, // 1 day
-    },
-    secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL || 'http://localhost:4000/api',
-    trustedOrigins: [
-      process.env.BETTER_AUTH_URL || 'http://localhost:4000',
-      process.env.CORS_ORIGIN || 'http://localhost:3000',
-    ],
-    advanced: {
-      database: {
-        generateId: () => randomUUID(),
-      },
-    },
-  });
+  },
+});
+
+export const auth = (database: PostgresJsDatabase, config: ConfigService) =>
+  betterAuth(authConfig(database, config));
 
 // export type User = typeof auth.$Infer.Session.user;
