@@ -4,6 +4,7 @@ import * as schema from '@repo/database';
 import { randomUUID } from 'crypto';
 import { ConfigService } from '@nestjs/config';
 import { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
+import { admin } from 'better-auth/plugins';
 
 export const authConfig = (
   database: PostgresJsDatabase,
@@ -38,6 +39,13 @@ export const authConfig = (
       ),
     },
   },
+  plugins: [
+    admin({
+      defaultRole: 'user',
+      adminRoles: ['admin'],
+      impersonationSessionDuration: 60 * 15, // 15 minutes
+    }),
+  ],
   session: {
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAge: 60 * 60 * 24, // 1 day
