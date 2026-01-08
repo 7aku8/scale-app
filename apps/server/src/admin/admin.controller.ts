@@ -9,14 +9,8 @@ export class AdminController {
     return { status: 'Witaj Szefie', activeScales: 15, pendingOrders: 2 };
   }
 
-  // Tu będziesz generował nowe urządzenia
   @Post('provision-scale')
   provisionScale(@Body() body: { mac: string }) {
-    // Tutaj logika:
-    // 1. Wygeneruj losowy SECRET_TOKEN
-    // 2. Zapisz do tabeli 'scales' (z organizationId: null)
-    // 3. Zwróć token, żebyś mógł go wgrać na ESP32
-
     const secretToken = crypto.randomUUID(); // prosty przykład
 
     // await db.insert(scales)...
