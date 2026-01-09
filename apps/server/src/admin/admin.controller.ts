@@ -11,9 +11,7 @@ export class AdminController {
 
   @Post('provision-scale')
   provisionScale(@Body() body: { mac: string }) {
-    const secretToken = crypto.randomUUID(); // prosty przykład
-
-    // await db.insert(scales)...
+    const secretToken = crypto.randomUUID();
 
     return {
       mac: body.mac,
