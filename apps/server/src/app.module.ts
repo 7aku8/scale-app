@@ -13,6 +13,7 @@ import { MqttModule } from './mqtt/mqtt.module';
 import { WebSocketModule } from './websocket/websocket.module';
 import { AuthModule as MyAuthModule } from './auth/auth.module';
 import { AdminModule } from './admin/admin.module';
+import { HealthModule } from './health/health.module';
 import { AuthModule } from '@thallesp/nestjs-better-auth';
 import { auth } from './auth/auth.instance';
 import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
@@ -40,6 +41,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
     MqttModule,
     WebSocketModule,
     AdminModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
