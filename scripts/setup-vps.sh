@@ -37,8 +37,6 @@ mkdir -p monitoring/{prometheus,grafana,loki,promtail}
 mkdir -p backups scripts
 DEPLOYER_SETUP
 
-cd /opt/scale-app
-
 # Firewall
 sudo ufw allow 22/tcp
 sudo ufw allow 80/tcp
@@ -47,8 +45,9 @@ sudo ufw allow 1883/tcp
 sudo ufw allow 9001/tcp
 sudo ufw --force enable
 
-# Create .env template
-cat > .env.example << 'EOL'
+# Create .env template as deployer user
+sudo -u $DEPLOY_USER bash << 'ENV_SETUP'
+cat > /opt/scale-app/.env.example << 'EOL'
 DB_USER=scaleuser
 DB_PASSWORD=CHANGEME
 DB_NAME=scale_production
@@ -72,10 +71,13 @@ GRAFANA_ADMIN_PASSWORD=CHANGEME
 MONITORING_HTPASSWD=admin:$apr1$...
 
 GITHUB_REPOSITORY_OWNER=your-github-username
-EOL
+BACKEND_VERSION=latest
+FRONTEND_VERSION=latest
 
-# Set ownership
-sudo chown $DEPLOY_USER:$DEPLOY_USER /opt/scale-app/.env.example
+NEXT_PUBLIC_API_URL=https://api.yourdomain.com
+NEXT_PUBLIC_WS_URL=wss://api.yourdomain.com
+EOL
+ENV_SETUP
 
 echo ""
 echo "========================================="
