@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:18-alpine AS deps
+FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 RUN corepack enable pnpm
@@ -11,7 +11,7 @@ COPY packages/database/package.json ./packages/database/
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Builder
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 RUN corepack enable pnpm
 
@@ -28,7 +28,7 @@ RUN pnpm --filter @repo/database build
 RUN pnpm --filter server build
 
 # Stage 3: Runner
-FROM node:18-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 RUN corepack enable pnpm
 
