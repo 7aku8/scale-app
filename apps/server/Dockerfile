@@ -21,6 +21,7 @@ COPY --from=deps /app/packages/database/node_modules ./packages/database/node_mo
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY packages/database ./packages/database
+COPY packages/typescript-config ./packages/typescript-config
 COPY apps/server ./apps/server
 
 RUN pnpm --filter @repo/database build
