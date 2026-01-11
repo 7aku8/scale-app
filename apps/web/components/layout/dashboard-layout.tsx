@@ -30,7 +30,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <div className="flex h-[60px] items-center border-b px-6">
             <Link className="flex items-center gap-2 font-semibold" href="/">
               <Bird className="h-6 w-6" />
-              <span className="">PoultryManager</span>
+              <span className="">drobit one</span>
             </Link>
           </div>
           <div className="flex-1 overflow-auto py-2">

@@ -44,7 +44,6 @@ export default function Home() {
 
   const chartData = rawData?.map((item: any) => ({
     ...item,
-    // Formatujemy godzinę dla osi X
     timeFormatted: format(new Date(item.time), "HH:mm"),
   })).reverse() || [];
 

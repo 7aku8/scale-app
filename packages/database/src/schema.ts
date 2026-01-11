@@ -27,6 +27,9 @@ export const users = pgTable("users", {
   image: text("image"),
   organizationId: integer("organization_id").references(() => organizations.id),
   role: text("role").default("user"), // 'admin', 'user', 'viewer'
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
