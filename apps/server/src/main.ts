@@ -37,7 +37,7 @@ async function bootstrap() {
 
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true, // Strip properties that don't have decorators
+      whitelist: true,
       transform: true,
       forbidNonWhitelisted: true,
       transformOptions: {
