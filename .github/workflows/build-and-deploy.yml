@@ -6,8 +6,6 @@ on:
       - master
     tags:
       - 'v*'
-      - 'backend-v*'
-      - 'frontend-v*'
   workflow_dispatch:
 
 env:
