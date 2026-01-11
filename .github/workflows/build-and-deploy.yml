@@ -57,6 +57,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Get Node.js version from .nvmrc
         id: node-version
         run: |
@@ -112,6 +116,10 @@ jobs:
       image-tag: ${{ steps.meta.outputs.version }}
     steps:
       - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
 
       - name: Get Node.js version from .nvmrc
         id: node-version

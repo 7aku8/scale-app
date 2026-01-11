@@ -41,7 +41,7 @@ async function bootstrap() {
       transform: true, // Automatically transform payloads to DTO instances
       forbidNonWhitelisted: true, // Throw errors for non-whitelisted properties
       transformOptions: {
-        enableImplicitConversion: true, // Automatically convert types
+        enableImplicitConversion: true,
       },
     }),
   );
