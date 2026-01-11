@@ -54,4 +54,7 @@ async function bootstrap() {
   logger.log(`WebSocket endpoint: ws://localhost:${port}/ws`);
 }
 
-bootstrap();
+bootstrap().catch((err) => {
+  console.error('Error during application bootstrap:', err);
+  process.exit(1);
+});
