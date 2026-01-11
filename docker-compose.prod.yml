@@ -28,7 +28,7 @@ services:
       - "traefik.http.routers.redirs.middlewares=redirect-to-https"
 
   backend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-backend:${BACKEND_VERSION:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-backend:0.0.1
     container_name: scale-backend
     restart: unless-stopped
     environment:
@@ -66,7 +66,7 @@ services:
       - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
   frontend:
-    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-frontend:${FRONTEND_VERSION:-latest}
+    image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-frontend:0.0.1
     container_name: scale-frontend
     restart: unless-stopped
     environment:
