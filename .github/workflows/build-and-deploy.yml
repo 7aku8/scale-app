@@ -173,7 +173,6 @@ jobs:
             --exclude='.next' \
             --exclude='dist' \
             docker-compose.prod.yml \
-            mosquitto/ \
             monitoring/ \
             scripts/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/scale-app/
