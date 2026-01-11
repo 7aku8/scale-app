@@ -47,7 +47,6 @@ jobs:
     needs: changes
     if: |
       needs.changes.outputs.backend == 'true' ||
-      startsWith(github.ref, 'refs/tags/backend-v') ||
       startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment: drobit-production
@@ -77,7 +76,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Backend
@@ -95,7 +94,6 @@ jobs:
     needs: changes
     if: |
       needs.changes.outputs.frontend == 'true' ||
-      startsWith(github.ref, 'refs/tags/frontend-v') ||
       startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment: drobit-production
@@ -125,7 +123,7 @@ jobs:
           tags: |
             type=ref,event=branch
             type=semver,pattern={{version}}
-            type=sha,prefix={{branch}}-
+            type=sha,prefix=sha-
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Frontend
