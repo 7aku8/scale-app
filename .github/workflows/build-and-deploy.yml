@@ -155,7 +155,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: drobit-production
-      url: https://${{ secrets.FRONTEND_DOMAIN }}
+      url: https://${{ vars.FRONTEND_DOMAIN }}
     steps:
       - uses: actions/checkout@v4
 
