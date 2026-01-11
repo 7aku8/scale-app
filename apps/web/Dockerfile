@@ -1,5 +1,5 @@
 # Stage 1: Dependencies
-FROM node:18-alpine AS deps
+FROM node:24-alpine AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 RUN corepack enable pnpm
@@ -13,7 +13,7 @@ COPY packages/eslint-config/package.json ./packages/eslint-config/
 RUN pnpm install --frozen-lockfile
 
 # Stage 2: Builder
-FROM node:18-alpine AS builder
+FROM node:24-alpine AS builder
 WORKDIR /app
 RUN corepack enable pnpm
 
@@ -34,7 +34,7 @@ ENV NEXT_PUBLIC_WS_URL=$NEXT_PUBLIC_WS_URL
 RUN pnpm --filter web build
 
 # Stage 3: Runner
-FROM node:18-alpine AS runner
+FROM node:24-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
