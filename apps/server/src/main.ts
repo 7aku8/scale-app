@@ -13,7 +13,6 @@ async function bootstrap() {
     bodyParser: false,
   });
 
-  // Enable CORS
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
@@ -22,25 +21,20 @@ async function bootstrap() {
   // BEGIN - BetterAuth workaround
   const expressApp = app.getHttpAdapter().getInstance();
 
-  // Access BetterAuth instance from AuthService
   const authService = app.get<AuthService>(AuthService);
 
-  // Mount BetterAuth before body parsers
   expressApp.all(
     /^\/api\/auth\/.*/,
     toNodeHandler(authService.instance.handler),
   );
 
-  // Re-enable Nest's JSON body parser AFTER mounting BetterAuth
   expressApp.use(express.json());
   // END - BetterAuth workaround
 
-  // Set global prefix for all routes except health checks
   app.setGlobalPrefix('api', {
     exclude: ['health'],
   });
 
-  // Enable validation pipes
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true, // Strip properties that don't have decorators
