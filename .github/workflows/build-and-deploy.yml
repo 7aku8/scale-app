@@ -199,11 +199,12 @@ jobs:
             docker image prune -af --filter "until=72h"
           EOF
 
-      - name: Verify Deployment
-        run: |
-          sleep 20
-          curl -f https://${{ secrets.BACKEND_DOMAIN }}/health || exit 1
-          curl -f https://${{ secrets.FRONTEND_DOMAIN }} || exit 1
+# Disable until DNS is set up
+#      - name: Verify Deployment
+#        run: |
+#          sleep 20
+#          curl -f https://${{ secrets.BACKEND_DOMAIN }}/health || exit 1
+#          curl -f https://${{ secrets.FRONTEND_DOMAIN }} || exit 1
 
   release:
     needs: [build-backend, build-frontend, deploy]
