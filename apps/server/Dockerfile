@@ -45,6 +45,8 @@ COPY --from=builder --chown=nestjs:nodejs /app/packages/database/dist ./packages
 COPY --from=builder --chown=nestjs:nodejs /app/packages/database/package.json ./packages/database/
 COPY --from=builder --chown=nestjs:nodejs /app/apps/server/dist ./apps/server/dist
 
+RUN ln -s /app/node_modules /app/apps/server/node_modules
+
 USER nestjs
 EXPOSE 3000
 ENV NODE_ENV=production
