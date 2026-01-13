@@ -31,21 +31,8 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-backend:0.0.1
     container_name: scale-backend
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      PORT: 3000
-      DATABASE_URL: postgresql://${DB_USER}:${DB_PASSWORD}@timescaledb:5432/${DB_NAME}
-      REDIS_HOST: redis
-      REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
-      MQTT_BROKER_URL: mqtt://mqtt:1883
-      MQTT_USERNAME: ${MQTT_USERNAME}
-      MQTT_PASSWORD: ${MQTT_PASSWORD}
-      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
-      BETTER_AUTH_URL: https://${BACKEND_DOMAIN}
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
-      CORS_ORIGIN: https://${FRONTEND_DOMAIN}
+    env_file:
+      - .env.backend
     depends_on:
       - timescaledb
       - redis
@@ -69,10 +56,8 @@ services:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-frontend:0.0.1
     container_name: scale-frontend
     restart: unless-stopped
-    environment:
-      NODE_ENV: production
-      NEXT_PUBLIC_API_URL: https://${BACKEND_DOMAIN}
-      NEXT_PUBLIC_WS_URL: wss://${BACKEND_DOMAIN}
+    env_file:
+      - .env.frontend
     depends_on:
       - backend
     networks:
