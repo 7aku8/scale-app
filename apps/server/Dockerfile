@@ -39,7 +39,6 @@ COPY --chown=nestjs:nodejs package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY --chown=nestjs:nodejs apps/server/package.json ./apps/server/
 COPY --chown=nestjs:nodejs packages/database/package.json ./packages/database/
 
-# CHANGE 1: Add --shamefully-hoist
 RUN pnpm install --frozen-lockfile --prod --shamefully-hoist
 
 COPY --from=builder --chown=nestjs:nodejs /app/packages/database/dist ./packages/database/dist

@@ -66,6 +66,8 @@ jobs:
           GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
           FRONTEND_DOMAIN="${{ vars.FRONTEND_DOMAIN }}"
           BACKEND_DOMAIN="${{ vars.BACKEND_DOMAIN }}"
+          CORS_ORIGINS="https://${{ vars.FRONTEND_DOMAIN }}"
+          BETTER_AUTH_URL="https://${{ vars.BACKEND_DOMAIN }}/api/auth"
           MONITORING_DOMAIN="${{ vars.MONITORING_DOMAIN }}"
           ACME_EMAIL="${{ vars.ACME_EMAIL }}"
           DB_USER="${{ secrets.DB_USER }}"
