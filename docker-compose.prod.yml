@@ -1,31 +1,24 @@
 services:
-  traefik:
-    image: traefik:v3.3.1
-    container_name: scale-traefik
+  caddy:
+    image: caddy:2-alpine
+    container_name: scale-caddy
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     environment:
-      - TRAEFIK_PROVIDERS_DOCKER=true
-      - TRAEFIK_PROVIDERS_DOCKER_EXPOSEDBYDEFAULT=false
-      - TRAEFIK_ENTRYPOINTS_WEB_ADDRESS=:80
-      - TRAEFIK_ENTRYPOINTS_WEBSECURE_ADDRESS=:443
-      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_EMAIL=${ACME_EMAIL}
-      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_STORAGE=/letsencrypt/acme.json
-      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE=true
-      - TRAEFIK_CERTIFICATESRESOLVERS_LETSENCRYPT_ACME_HTTPCHALLENGE_ENTRYPOINT=web
+      - ACME_EMAIL=${ACME_EMAIL}
+      - FRONTEND_DOMAIN=${FRONTEND_DOMAIN}
+      - BACKEND_DOMAIN=${BACKEND_DOMAIN}
+      - MONITORING_DOMAIN=${MONITORING_DOMAIN}
+      - MONITORING_USER=admin
+      - MONITORING_HASH=${GRAFANA_ADMIN_PASSWORD}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - traefik-letsencrypt:/letsencrypt
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
     networks:
       - scale-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
-      - "traefik.http.routers.redirs.rule=hostregexp(`{host:.+}`)"
-      - "traefik.http.routers.redirs.entrypoints=web"
-      - "traefik.http.routers.redirs.middlewares=redirect-to-https"
 
   backend:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-backend:0.0.1
@@ -45,12 +38,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.backend.rule=Host(`${BACKEND_DOMAIN}`)"
-      - "traefik.http.routers.backend.entrypoints=websecure"
-      - "traefik.http.routers.backend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.backend.loadbalancer.server.port=3000"
 
   frontend:
     image: ghcr.io/${GITHUB_REPOSITORY_OWNER}/scale-app-frontend:0.0.1
@@ -68,12 +55,6 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.frontend.rule=Host(`${FRONTEND_DOMAIN}`)"
-      - "traefik.http.routers.frontend.entrypoints=websecure"
-      - "traefik.http.routers.frontend.tls.certresolver=letsencrypt"
-      - "traefik.http.services.frontend.loadbalancer.server.port=3000"
 
   timescaledb:
     image: timescale/timescaledb-ha:pg18-all
@@ -140,13 +121,6 @@ services:
       - prometheus_data:/prometheus
     networks:
       - scale-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.prometheus.rule=Host(`${MONITORING_DOMAIN}`) && PathPrefix(`/prometheus`)"
-      - "traefik.http.routers.prometheus.entrypoints=websecure"
-      - "traefik.http.routers.prometheus.tls.certresolver=letsencrypt"
-      - "traefik.http.routers.prometheus.middlewares=auth"
-      - "traefik.http.middlewares.auth.basicauth.users=${MONITORING_HTPASSWD}"
 
   grafana:
     image: grafana/grafana:latest
@@ -161,12 +135,6 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
     networks:
       - scale-network
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.grafana.rule=Host(`${MONITORING_DOMAIN}`) && PathPrefix(`/grafana`)"
-      - "traefik.http.routers.grafana.entrypoints=websecure"
-      - "traefik.http.routers.grafana.tls.certresolver=letsencrypt"
-      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
 
   loki:
     image: grafana/loki:latest
@@ -217,10 +185,11 @@ volumes:
   scale_redis_data:
   scale_mqtt_data:
   scale_mqtt_log:
-  traefik-letsencrypt:
   prometheus_data:
   grafana_data:
   loki_data:
+  caddy_data:
+  caddy_config:
 
 networks:
   scale-network:
