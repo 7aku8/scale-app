@@ -49,4 +49,4 @@ USER nestjs
 EXPOSE 3000
 ENV NODE_ENV=production
 
-CMD ["node", "apps/server/dist/main.js"]
+CMD ["node", "apps/server/dist/src/main.js"]
