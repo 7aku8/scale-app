@@ -39,6 +39,8 @@ jobs:
 
       - name: Create .env files on VPS
         run: |
+          ESCAPED_HTPASSWD=$(echo '${{ secrets.MONITORING_HTPASSWD }}' | sed 's/\$/\$\$/g')
+          
           ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env" << 'MAINENV'
           ACME_EMAIL="${{ vars.ACME_EMAIL }}"
           GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
@@ -50,7 +52,7 @@ jobs:
           DB_NAME="${{ secrets.DB_NAME }}"
           REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
           GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
-          MONITORING_HTPASSWD="${{ secrets.MONITORING_HTPASSWD }}"
+          MONITORING_HTPASSWD="${ESCAPED_HTPASSWD}"
           MAINENV
   
           ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env.frontend" << 'FRONTENV'
