@@ -39,9 +39,7 @@ jobs:
 
       - name: Create .env files on VPS
         run: |
-          ESCAPED_HTPASSWD=$(echo '${{ secrets.MONITORING_HTPASSWD }}' | sed 's/\$/\$\$/g')
-          
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env" << 'MAINENV'
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && ESCAPED_HTPASSWD=$(echo '${{ secrets.MONITORING_HTPASSWD }}' | sed 's/\$/\$\$/g') && cat > .env" << 'MAINENV'
           ACME_EMAIL="${{ vars.ACME_EMAIL }}"
           GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
           FRONTEND_DOMAIN="${{ vars.FRONTEND_DOMAIN }}"
