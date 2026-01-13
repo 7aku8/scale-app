@@ -37,55 +37,47 @@ jobs:
             scripts/ \
             ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/scale-app/
 
-      - name: Create .env file on VPS
+      - name: Create .env files on VPS
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << EOF
-            cd /opt/scale-app
-          
-            export ACME_EMAIL=${{ vars.ACME_EMAIL }}
-            export GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
-            export FRONTEND_DOMAIN=${{ vars.FRONTEND_DOMAIN }}
-            export BACKEND_DOMAIN=${{ vars.BACKEND_DOMAIN }}
-            export MONITORING_DOMAIN=${{ vars.MONITORING_DOMAIN }}
-            export DB_USER=${{ secrets.DB_USER }}
-            export DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            export DB_NAME=${{ secrets.DB_NAME }}
-            export REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            export MQTT_USERNAME=${{ secrets.MQTT_USERNAME }}
-            export MQTT_PASSWORD=${{ secrets.MQTT_PASSWORD }}
-            export BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            export GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            export GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            export GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
-            export MONITORING_HTPASSWD=${{ secrets.MONITORING_HTPASSWD }}
-          
-            cat > .env.frontend << 'ENVEOF'
-            NODE_ENV=production
-            NEXT_PUBLIC_API_URL=https://${{ vars.BACKEND_DOMAIN }}
-            NEXT_PUBLIC_WS_URL=wss://${{ vars.BACKEND_DOMAIN }}
-            ENVEOF
-          
-          
-            cat > .env.backend << 'ENVEOF'
-            NODE_ENV=production
-            GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
-            FRONTEND_DOMAIN=${{ vars.FRONTEND_DOMAIN }}
-            BACKEND_DOMAIN=${{ vars.BACKEND_DOMAIN }}
-            MONITORING_DOMAIN=${{ vars.MONITORING_DOMAIN }}
-            ACME_EMAIL=${{ vars.ACME_EMAIL }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            MQTT_USERNAME=${{ secrets.MQTT_USERNAME }}
-            MQTT_PASSWORD=${{ secrets.MQTT_PASSWORD }}
-            BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
-            GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
-            GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
-            GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
-            MONITORING_HTPASSWD=${{ secrets.MONITORING_HTPASSWD }}
-            ENVEOF
-            EOF
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env" << 'MAINENV'
+          ACME_EMAIL=${{ vars.ACME_EMAIL }}
+          GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
+          FRONTEND_DOMAIN=${{ vars.FRONTEND_DOMAIN }}
+          BACKEND_DOMAIN=${{ vars.BACKEND_DOMAIN }}
+          MONITORING_DOMAIN=${{ vars.MONITORING_DOMAIN }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          MONITORING_HTPASSWD=${{ secrets.MONITORING_HTPASSWD }}
+          MAINENV
+
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env.frontend" << 'FRONTENV'
+          NODE_ENV=production
+          NEXT_PUBLIC_API_URL=https://${{ vars.BACKEND_DOMAIN }}
+          NEXT_PUBLIC_WS_URL=wss://${{ vars.BACKEND_DOMAIN }}
+          FRONTENV
+
+          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env.backend" << 'BACKENV'
+          NODE_ENV=production
+          GITHUB_REPOSITORY_OWNER=${{ github.repository_owner }}
+          FRONTEND_DOMAIN=${{ vars.FRONTEND_DOMAIN }}
+          BACKEND_DOMAIN=${{ vars.BACKEND_DOMAIN }}
+          MONITORING_DOMAIN=${{ vars.MONITORING_DOMAIN }}
+          ACME_EMAIL=${{ vars.ACME_EMAIL }}
+          DB_USER=${{ secrets.DB_USER }}
+          DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+          DB_NAME=${{ secrets.DB_NAME }}
+          REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+          MQTT_USERNAME=${{ secrets.MQTT_USERNAME }}
+          MQTT_PASSWORD=${{ secrets.MQTT_PASSWORD }}
+          BETTER_AUTH_SECRET=${{ secrets.BETTER_AUTH_SECRET }}
+          GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          MONITORING_HTPASSWD=${{ secrets.MONITORING_HTPASSWD }}
+          BACKENV
 
       - name: Deploy on VPS
         run: |
