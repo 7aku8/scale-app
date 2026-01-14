@@ -34,6 +34,3 @@ data:
     password_file /mosquitto/config/password.txt
   password.txt: |
     ${MQTT_USERNAME}:${MQTT_PASSWORD_HASH} 
-    # UWAGA: Mosquitto wymaga hasha w pliku. 
-    # Jeśli trzymasz plain text w secrets, musisz obsłużyć generowanie hasha w CI/CD 
-    # lub zmienić allow_anonymous na true (niezalecane).
