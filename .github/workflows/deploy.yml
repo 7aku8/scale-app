@@ -153,7 +153,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    jobs:
+    steps:
       - name: Create deployment
         uses: chrnorm/deployment-action@v2
         with:
