@@ -2,7 +2,8 @@ name: Deploy
 
 on:
   push:
-    branches: [ master ]
+    tags:
+      - 'v*'  # Uruchom tylko dla tagów zaczynających się od "v" (np. v0.0.1)
   workflow_dispatch:
 
 jobs:
@@ -27,22 +28,24 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./apps/server/Dockerfile # Upewnij się co do ścieżki (w starym pliku miałeś ./apps/server, w nowym ./apps/backend - sprawdź to!)
+          file: ./apps/server/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/scale-app-backend:latest
             ghcr.io/${{ github.repository_owner }}/scale-app-backend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/scale-app-backend:${{ github.ref_name }}
 
-      # FRONTEND (Poprawione build-args)
+      # FRONTEND
       - name: Build and push Frontend
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./apps/web/Dockerfile # Tutaj też sprawdź ścieżkę (apps/web vs apps/frontend)
+          file: ./apps/web/Dockerfile
           push: true
           tags: |
             ghcr.io/${{ github.repository_owner }}/scale-app-frontend:latest
             ghcr.io/${{ github.repository_owner }}/scale-app-frontend:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/scale-app-frontend:${{ github.ref_name }}
           build-args: |
             NEXT_PUBLIC_API_URL=https://${{ vars.BACKEND_DOMAIN }}
             NEXT_PUBLIC_WS_URL=wss://${{ vars.BACKEND_DOMAIN }}
@@ -51,6 +54,8 @@ jobs:
     needs: build-and-push
     environment: drobit-production
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # WYMAGANE do stworzenia Release
     steps:
       - uses: actions/checkout@v4
 
@@ -68,9 +73,13 @@ jobs:
           echo "${{ secrets.KUBECONFIG }}" | base64 -d > ~/.kube/config
           chmod 600 ~/.kube/config
 
-      # 1. Image Pull Secret
+      # 1. Image Pull Secret (z zabezpieczeniem przed błędem, jeśli istnieje)
       - name: Create Image Pull Secret
         run: |
+          # 1. Najpierw upewnij się, że namespace istnieje!
+          kubectl create namespace scale-app --dry-run=client -o yaml | kubectl apply -f -
+
+          # 2. Teraz stwórz/zaktualizuj sekret
           kubectl create secret docker-registry ghcr-secret \
             --docker-server=ghcr.io \
             --docker-username=${{ github.actor }} \
@@ -89,7 +98,6 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           MQTT_USERNAME: ${{ secrets.MQTT_USERNAME }}
-          MQTT_PASSWORD: ${{ secrets.MQTT_PASSWORD }}
           MQTT_PASSWORD_HASH: ${{ secrets.MQTT_PASSWORD_HASH }} 
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -103,8 +111,8 @@ jobs:
         run: |
           mkdir -p k8s/generated
           
-          # Upewnij się, że masz pakiet gettext-base (envsubst) - ubuntu-latest zazwyczaj go ma, 
-          # ale dla pewności można dodać: sudo apt-get install -y gettext-base
+          # Upewnij się, że masz pakiet gettext-base
+          # sudo apt-get install -y gettext-base
           
           for file in k8s/01-secrets-template.yaml k8s/02-configs.yaml k8s/apps/ingress.yaml; do
             envsubst < "$file" > "k8s/generated/$(basename "$file")"
@@ -118,13 +126,12 @@ jobs:
           kubectl apply -f k8s/generated/
           kubectl apply -f k8s/infrastructure/
           
-          # Podmiana obrazów (Dynamiczna nazwa ownera - zamieniamy na małe litery bashową metodą ,,)
+          # Podmiana obrazów 
           REPO_OWNER="${{ github.repository_owner }}"
           REPO_OWNER="${REPO_OWNER,,}" 
 
-          # WAŻNE: W plikach .yaml w repozytorium musisz mieć wpisany placeholder:
-          # image: ghcr.io/PLACEHOLDER_USER/scale-app-backend:latest
-          
+          # WAŻNE: Podmieniamy na hash commita (github.sha) - to najbezpieczniejsza metoda
+          # nawet przy tagach, bo hash jest jednoznaczny.
           sed -i "s|ghcr.io/PLACEHOLDER_USER/scale-app-backend:latest|ghcr.io/$REPO_OWNER/scale-app-backend:${{ github.sha }}|g" k8s/apps/backend.yaml
           sed -i "s|ghcr.io/PLACEHOLDER_USER/scale-app-frontend:latest|ghcr.io/$REPO_OWNER/scale-app-frontend:${{ github.sha }}|g" k8s/apps/frontend.yaml
           
@@ -136,8 +143,17 @@ jobs:
         run: |
           helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
           helm repo update
-          # --wait sprawi, że workflow poczeka aż monitoring wstanie (opcjonalne, wydłuża czas)
+          # --wait sprawi, że workflow poczeka aż monitoring wstanie
           helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
             -n monitoring \
             -f k8s/monitoring/values.yaml \
             --set grafana.adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+
+      # 5. Create Release (NOWY KROK)
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          generate_release_notes: true
+          # Opcjonalnie: jeśli chcesz, aby release był oznaczony jako 'prerelease' dla tagów typu v0.0.1-beta
+          prerelease: ${{ contains(github.ref, '-') }}
