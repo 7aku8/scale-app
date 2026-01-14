@@ -148,7 +148,7 @@ jobs:
             --set grafana.adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
 
   create-realease:
-    needs: release
+    needs: deploy
     environment: drobit-production
     runs-on: ubuntu-latest
     permissions:
