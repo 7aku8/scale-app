@@ -54,8 +54,6 @@ jobs:
     needs: build-and-push
     environment: drobit-production
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # WYMAGANE do stworzenia Release
     steps:
       - uses: actions/checkout@v4
 
@@ -136,15 +134,7 @@ jobs:
           sed -i "s|ghcr.io/PLACEHOLDER_USER/scale-app-frontend:latest|ghcr.io/$REPO_OWNER/scale-app-frontend:${{ github.sha }}|g" k8s/apps/frontend.yaml
           
           kubectl apply -f k8s/apps/backend.yaml
-          kubectl apply -f k8s/apps/frontend.yaml
-
-      - name: Create deployment
-        uses: chrnorm/deployment-action@v2
-        with:
-          token: ${{ github.token }}
-          environment: production
-          environment-url: https://${{ vars.FRONTEND_DOMAIN }}
-          auto-inactive: false
+          kubectl apply -f k8s/apps/frontend.yaml 
 
       # 4. Monitoring (Helm)
       - name: Deploy Monitoring
@@ -157,7 +147,21 @@ jobs:
             -f k8s/monitoring/values.yaml \
             --set grafana.adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
 
-      # 5. Create Release (NOWY KROK)
+  create-realease:
+    needs: release
+    environment: drobit-production
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    jobs:
+      - name: Create deployment
+        uses: chrnorm/deployment-action@v2
+        with:
+          token: ${{ github.token }}
+          environment: production
+          environment-url: https://${{ vars.FRONTEND_DOMAIN }}
+          auto-inactive: false
+      
       - name: Create Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
