@@ -8,6 +8,7 @@ on:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    environment: drobit-production
     permissions:
       contents: read
       packages: write
@@ -48,6 +49,7 @@ jobs:
 
   deploy:
     needs: build-and-push
+    environment: drobit-production
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
