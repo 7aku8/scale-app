@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mqtt
+  namespace: scale-app
+spec:
+  serviceName: "mqtt"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mqtt
+  template:
+    metadata:
+      labels:
+        app: mqtt
+    spec:
+      containers:
+        - name: mqtt
+          image: eclipse-mosquitto:2.0.22
+          ports:
+            - containerPort: 1883
+            - containerPort: 9001
+          volumeMounts:
+            - name: mqtt-data
+              mountPath: /mosquitto/data
+            - name: config
+              mountPath: /mosquitto/config/mosquitto.conf
+              subPath: mosquitto.conf
+            - name: config
+              mountPath: /mosquitto/config/password.txt
+              subPath: password.txt
+      volumes:
+        - name: config
+          configMap:
+            name: mosquitto-config
+  volumeClaimTemplates:
+    - metadata:
+        name: mqtt-data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mqtt
+  namespace: scale-app
+spec:
+  ports:
+    - port: 1883
+      name: mqtt
+    - port: 9001
+      name: websockets
+  selector:
+    app: mqtt

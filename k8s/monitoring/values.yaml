@@ -1,0 +1,21 @@
+grafana:
+  adminPassword: "${GRAFANA_ADMIN_PASSWORD}" # Helm nie obsługuje envsubst natywnie, trzeba przekazać przez --set w CI
+  ingress:
+    enabled: false # Obsłużymy to głównym Ingressem lub osobnym
+  persistence:
+    enabled: true
+    size: 10Gi
+
+prometheus:
+  prometheusSpec:
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 20Gi
+
+# Wyłączamy to czego nie potrzebujesz, NodeExporter jest włączony domyślnie
+alertmanager:
+  enabled: false

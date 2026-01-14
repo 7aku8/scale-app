@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: scale-app
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: monitoring

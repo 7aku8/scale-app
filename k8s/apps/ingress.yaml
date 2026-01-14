@@ -1,0 +1,65 @@
+# 1. ClusterIssuer - Konfiguracja Let's Encrypt
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: ${ACME_EMAIL} # Podmienić w CI/CD
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    solvers:
+      - http01:
+          ingress:
+            class: traefik
+
+---
+# 2. Ingress - Routing
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: main-ingress
+  namespace: scale-app
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    # Opcjonalnie: Middleware dla Traefika (security headers)
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - ${FRONTEND_DOMAIN}
+        - ${BACKEND_DOMAIN}
+        - ${MONITORING_DOMAIN}
+      secretName: main-tls-secret
+  rules:
+    - host: ${FRONTEND_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+    - host: ${BACKEND_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: backend
+                port:
+                  number: 80
+    - host: ${MONITORING_DOMAIN}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana # Serwis będzie w innym namespace, wymaga ExternalName service lub pełnego FQDN, poniżej uproszczenie
+                port:
+                  number: 80

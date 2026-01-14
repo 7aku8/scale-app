@@ -2,98 +2,140 @@ name: Deploy
 
 on:
   push:
-    branches:
-      - master
-    paths:
-      - 'docker-compose.prod.yml'
-      - 'monitoring/**'
-      - 'scripts/**'
+    branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-push:
     runs-on: ubuntu-latest
-    environment:
-      name: drobit-production
-      url: https://${{ vars.FRONTEND_DOMAIN }}
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup SSH
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # BACKEND
+      - name: Build and push Backend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/server/Dockerfile # Upewnij się co do ścieżki (w starym pliku miałeś ./apps/server, w nowym ./apps/backend - sprawdź to!)
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/scale-app-backend:latest
+            ghcr.io/${{ github.repository_owner }}/scale-app-backend:${{ github.sha }}
+
+      # FRONTEND (Poprawione build-args)
+      - name: Build and push Frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/web/Dockerfile # Tutaj też sprawdź ścieżkę (apps/web vs apps/frontend)
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/scale-app-frontend:latest
+            ghcr.io/${{ github.repository_owner }}/scale-app-frontend:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=https://${{ vars.BACKEND_DOMAIN }}
+            NEXT_PUBLIC_WS_URL=wss://${{ vars.BACKEND_DOMAIN }}
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Instalacja narzędzi
+      - name: Install kubectl
+        uses: azure/setup-kubectl@v3
+
+      - name: Install Helm
+        uses: azure/setup-helm@v4
+
+      # Konfiguracja dostępu do K3s
+      - name: Set KUBECONFIG
         run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H ${{ secrets.VPS_HOST }} >> ~/.ssh/known_hosts
+          mkdir -p ~/.kube
+          echo "${{ secrets.KUBECONFIG }}" > ~/.kube/config
+          chmod 600 ~/.kube/config
 
-      - name: Copy deployment files to VPS
+      # 1. Image Pull Secret
+      - name: Create Image Pull Secret
         run: |
-          rsync -avz -e "ssh -i ~/.ssh/deploy_key" \
-            --exclude='node_modules' \
-            --exclude='.next' \
-            --exclude='dist' \
-            docker-compose.prod.yml \
-            monitoring/ \
-            scripts/ \
-            ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/scale-app/
+          kubectl create secret docker-registry ghcr-secret \
+            --docker-server=ghcr.io \
+            --docker-username=${{ github.actor }} \
+            --docker-password=${{ secrets.GITHUB_TOKEN }} \
+            --docker-email=${{ vars.ACME_EMAIL }} \
+            -n scale-app \
+            --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Create .env files on VPS
+      # 2. Renderowanie plików (envsubst)
+      - name: Render Manifests
+        shell: bash
+        env:
+          # Secrets
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          MQTT_USERNAME: ${{ secrets.MQTT_USERNAME }}
+          MQTT_PASSWORD: ${{ secrets.MQTT_PASSWORD }}
+          MQTT_PASSWORD_HASH: ${{ secrets.MQTT_PASSWORD_HASH }} # <--- Dodaj ten sekret w GitHub!
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          # Vars
+          ACME_EMAIL: ${{ vars.ACME_EMAIL }}
+          FRONTEND_DOMAIN: ${{ vars.FRONTEND_DOMAIN }}
+          BACKEND_DOMAIN: ${{ vars.BACKEND_DOMAIN }}
+          MONITORING_DOMAIN: ${{ vars.MONITORING_DOMAIN }}
         run: |
-          ESCAPED_HTPASSWD=$(echo '${{ secrets.MONITORING_HTPASSWD }}' | sed 's/\$/\$\$/g')
+          mkdir -p k8s/generated
+          
+          # Upewnij się, że masz pakiet gettext-base (envsubst) - ubuntu-latest zazwyczaj go ma, 
+          # ale dla pewności można dodać: sudo apt-get install -y gettext-base
+          
+          for file in k8s/01-secrets-template.yaml k8s/02-configs.yaml k8s/apps/ingress.yaml; do
+            envsubst < "$file" > "k8s/generated/$(basename "$file")"
+          done
 
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env" << MAINENV
-          ACME_EMAIL="${{ vars.ACME_EMAIL }}"
-          GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
-          FRONTEND_DOMAIN="${{ vars.FRONTEND_DOMAIN }}"
-          BACKEND_DOMAIN="${{ vars.BACKEND_DOMAIN }}"
-          MONITORING_DOMAIN="${{ vars.MONITORING_DOMAIN }}"
-          DB_USER="${{ secrets.DB_USER }}"
-          DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-          DB_NAME="${{ secrets.DB_NAME }}"
-          REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
-          GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
-          MONITORING_HTPASSWD="${ESCAPED_HTPASSWD}"
-          MAINENV
-  
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env.frontend" << 'FRONTENV'
-          NODE_ENV="production"
-          NEXT_PUBLIC_API_URL="https://${{ vars.BACKEND_DOMAIN }}"
-          NEXT_PUBLIC_WS_URL="wss://${{ vars.BACKEND_DOMAIN }}"
-          FRONTENV
-  
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} "cd /opt/scale-app && cat > .env.backend" << 'BACKENV'
-          NODE_ENV="production"
-          GITHUB_REPOSITORY_OWNER="${{ github.repository_owner }}"
-          FRONTEND_DOMAIN="${{ vars.FRONTEND_DOMAIN }}"
-          BACKEND_DOMAIN="${{ vars.BACKEND_DOMAIN }}"
-          CORS_ORIGIN="https://${{ vars.FRONTEND_DOMAIN }}"
-          BETTER_AUTH_URL="https://${{ vars.BACKEND_DOMAIN }}/api/auth"
-          MONITORING_DOMAIN="${{ vars.MONITORING_DOMAIN }}"
-          ACME_EMAIL="${{ vars.ACME_EMAIL }}"
-          DB_USER="${{ secrets.DB_USER }}"
-          DB_PASSWORD="${{ secrets.DB_PASSWORD }}"
-          DB_NAME="${{ secrets.DB_NAME }}"
-          REDIS_PASSWORD="${{ secrets.REDIS_PASSWORD }}"
-          MQTT_USERNAME="${{ secrets.MQTT_USERNAME }}"
-          MQTT_PASSWORD="${{ secrets.MQTT_PASSWORD }}"
-          BETTER_AUTH_SECRET="${{ secrets.BETTER_AUTH_SECRET }}"
-          GOOGLE_CLIENT_ID="${{ secrets.GOOGLE_CLIENT_ID }}"
-          GOOGLE_CLIENT_SECRET="${{ secrets.GOOGLE_CLIENT_SECRET }}"
-          GRAFANA_ADMIN_PASSWORD="${{ secrets.GRAFANA_ADMIN_PASSWORD }}"
-          MONITORING_HTPASSWD="${{ secrets.MONITORING_HTPASSWD }}"
-          BACKENV
-
-      - name: Deploy on VPS
+      # 3. Aplikowanie zmian K8s
+      - name: Apply K8s Manifests
         run: |
-          ssh -i ~/.ssh/deploy_key ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} << 'EOF'
-            cd /opt/scale-app
+          # Namespaces i Configi
+          kubectl apply -f k8s/00-namespaces.yaml
+          kubectl apply -f k8s/generated/
+          kubectl apply -f k8s/infrastructure/
+          
+          # Podmiana obrazów (Dynamiczna nazwa ownera - zamieniamy na małe litery bashową metodą ,,)
+          REPO_OWNER="${{ github.repository_owner }}"
+          REPO_OWNER="${REPO_OWNER,,}" 
 
-            echo "${{ secrets.GHCR_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          # WAŻNE: W plikach .yaml w repozytorium musisz mieć wpisany placeholder:
+          # image: ghcr.io/PLACEHOLDER_USER/scale-app-backend:latest
+          
+          sed -i "s|ghcr.io/PLACEHOLDER_USER/scale-app-backend:latest|ghcr.io/$REPO_OWNER/scale-app-backend:${{ github.sha }}|g" k8s/apps/backend.yaml
+          sed -i "s|ghcr.io/PLACEHOLDER_USER/scale-app-frontend:latest|ghcr.io/$REPO_OWNER/scale-app-frontend:${{ github.sha }}|g" k8s/apps/frontend.yaml
+          
+          kubectl apply -f k8s/apps/backend.yaml
+          kubectl apply -f k8s/apps/frontend.yaml
 
-            docker compose -f docker-compose.prod.yml pull
-            docker compose -f docker-compose.prod.yml up -d
-
-            sleep 15
-            docker compose -f docker-compose.prod.yml ps
-            docker image prune -af --filter "until=72h"
-          EOF
+      # 4. Monitoring (Helm)
+      - name: Deploy Monitoring
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo update
+          # --wait sprawi, że workflow poczeka aż monitoring wstanie (opcjonalne, wydłuża czas)
+          helm upgrade --install monitoring prometheus-community/kube-prometheus-stack \
+            -n monitoring \
+            -f k8s/monitoring/values.yaml \
+            --set grafana.adminPassword=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
