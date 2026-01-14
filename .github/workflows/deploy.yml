@@ -88,7 +88,7 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           MQTT_USERNAME: ${{ secrets.MQTT_USERNAME }}
           MQTT_PASSWORD: ${{ secrets.MQTT_PASSWORD }}
-          MQTT_PASSWORD_HASH: ${{ secrets.MQTT_PASSWORD_HASH }} # <--- Dodaj ten sekret w GitHub!
+          MQTT_PASSWORD_HASH: ${{ secrets.MQTT_PASSWORD_HASH }} 
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
