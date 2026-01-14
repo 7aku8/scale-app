@@ -96,6 +96,7 @@ jobs:
           DB_NAME: ${{ secrets.DB_NAME }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
           MQTT_USERNAME: ${{ secrets.MQTT_USERNAME }}
+          MQTT_PASSWORD: ${{ secrets.MQTT_PASSWORD }}
           MQTT_PASSWORD_HASH: ${{ secrets.MQTT_PASSWORD_HASH }} 
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
@@ -154,6 +155,8 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Create deployment
         uses: chrnorm/deployment-action@v2
         with:
