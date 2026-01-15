@@ -1,10 +1,25 @@
 grafana:
-  adminPassword: "${GRAFANA_ADMIN_PASSWORD}" # Helm nie obsługuje envsubst natywnie, trzeba przekazać przez --set w CI
+  adminPassword: "${GRAFANA_ADMIN_PASSWORD}"
   ingress:
     enabled: false
   persistence:
     enabled: true
     size: 10Gi
+  
+  initChownData:
+    enabled: true
+    image:
+      repository: busybox
+      tag: "1.31.1"
+      pullPolicy: IfNotPresent
+    resources: {}
+
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki:3100 
+      access: proxy
+      isDefault: false 
 
 prometheus:
   prometheusSpec:
@@ -16,6 +31,5 @@ prometheus:
             requests:
               storage: 20Gi
 
-# Wyłączamy to czego nie potrzebujesz, NodeExporter jest włączony domyślnie
 alertmanager:
   enabled: false
