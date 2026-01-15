@@ -6,7 +6,7 @@ metadata:
 spec:
   acme:
     server: https://acme-v02.api.letsencrypt.org/directory
-    email: ${ACME_EMAIL} # Podmienić w CI/CD
+    email: ${ACME_EMAIL}
     privateKeySecretRef:
       name: letsencrypt-prod
     solvers:
@@ -30,7 +30,6 @@ spec:
     - hosts:
         - ${FRONTEND_DOMAIN}
         - ${BACKEND_DOMAIN}
-        - ${MONITORING_DOMAIN}
       secretName: main-tls-secret
   rules:
     - host: ${FRONTEND_DOMAIN}
@@ -51,15 +50,5 @@ spec:
             backend:
               service:
                 name: backend
-                port:
-                  number: 80
-    - host: ${MONITORING_DOMAIN}
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: grafana # Serwis będzie w innym namespace, wymaga ExternalName service lub pełnego FQDN, poniżej uproszczenie
                 port:
                   number: 80

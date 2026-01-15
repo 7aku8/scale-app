@@ -1,7 +1,7 @@
 grafana:
   adminPassword: "${GRAFANA_ADMIN_PASSWORD}" # Helm nie obsługuje envsubst natywnie, trzeba przekazać przez --set w CI
   ingress:
-    enabled: false # Obsłużymy to głównym Ingressem lub osobnym
+    enabled: false
   persistence:
     enabled: true
     size: 10Gi
