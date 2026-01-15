@@ -5,6 +5,9 @@ grafana:
   persistence:
     enabled: true
     size: 10Gi
+
+  initChownData:
+    enabled: false
   
   securityContext:
     runAsUser: 472
