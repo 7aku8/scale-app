@@ -113,7 +113,7 @@ jobs:
           # Upewnij się, że masz pakiet gettext-base
           # sudo apt-get install -y gettext-base
           
-          for file in k8s/01-secrets-template.yaml k8s/02-configs.yaml k8s/apps/ingress.yaml; do
+          for file in k8s/01-secrets-template.yaml k8s/02-configs.yaml k8s/apps/ingress.yaml k8s/monitoring/ingress.yaml; do
             envsubst < "$file" > "k8s/generated/$(basename "$file")"
           done
 
