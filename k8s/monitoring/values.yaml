@@ -22,9 +22,12 @@ grafana:
   additionalDataSources:
     - name: Loki
       type: loki
-      url: http://loki:3100 
+      url: http://loki:3100
       access: proxy
-      isDefault: false 
+      jsonData:
+        httpHeaderName1: "X-Scope-OrgID"
+      secureJsonData:
+        httpHeaderValue1: "1" 
 
 prometheus:
   prometheusSpec:
