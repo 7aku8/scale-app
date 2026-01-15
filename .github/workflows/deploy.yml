@@ -162,7 +162,7 @@ jobs:
         uses: chrnorm/deployment-action@v2
         with:
           token: ${{ github.token }}
-          environment: production
+          environment: drobit-production
           environment-url: https://${{ vars.FRONTEND_DOMAIN }}
           auto-inactive: false
       
