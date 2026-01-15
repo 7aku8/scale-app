@@ -6,13 +6,10 @@ grafana:
     enabled: true
     size: 10Gi
   
-  initChownData:
-    enabled: true
-    image:
-      repository: busybox
-      tag: "1.31.1"
-      pullPolicy: IfNotPresent
-    resources: {}
+  securityContext:
+    runAsUser: 472
+    runAsGroup: 472
+    fsGroup: 472
 
   additionalDataSources:
     - name: Loki
