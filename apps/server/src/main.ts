@@ -1,17 +1,20 @@
 import { NestFactory } from '@nestjs/core';
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
 import { AuthService } from '@thallesp/nestjs-better-auth';
 import { toNodeHandler } from 'better-auth/node';
 import express from 'express';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
-async function bootstrap() {
-  const logger = new Logger('Bootstrap');
+import { Logger } from 'nestjs-pino';
 
+async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bodyParser: false,
+    bufferLogs: true,
   });
+
+  app.useLogger(app.get(Logger));
 
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
@@ -49,6 +52,7 @@ async function bootstrap() {
   const port = process.env.PORT ?? 3000;
   await app.listen(port);
 
+  const logger = app.get(Logger);
   logger.log(`Application is running on: http://localhost:${port}`);
   logger.log(`API endpoints: http://localhost:${port}/api`);
   logger.log(`WebSocket endpoint: ws://localhost:${port}/ws`);

@@ -1,5 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { LoggerModule } from 'nestjs-pino';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -24,6 +26,23 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
       isGlobal: true,
       load: [configuration],
     }),
+    LoggerModule.forRoot({
+      pinoHttp: {
+        customProps: (req, res) => ({
+          context: 'HTTP',
+        }),
+        transport:
+          process.env.NODE_ENV !== 'production'
+            ? {
+              target: 'pino-pretty',
+              options: {
+                singleLine: true,
+              },
+            }
+            : undefined,
+      },
+    }),
+    PrometheusModule.register(),
     DatabaseModule,
     EventEmitterModule.forRoot(),
     AuthModule.forRootAsync({
@@ -46,4 +65,4 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule { }
