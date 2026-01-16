@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'nestjs-pino';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { SentryModule } from '@sentry/nestjs/setup';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import configuration from './config/configuration';
@@ -42,6 +43,7 @@ import type { PostgresJsDatabase } from 'drizzle-orm/postgres-js';
             : undefined,
       },
     }),
+    SentryModule.forRoot(),
     PrometheusModule.register(),
     DatabaseModule,
     EventEmitterModule.forRoot(),

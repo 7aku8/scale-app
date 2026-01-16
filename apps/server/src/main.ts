@@ -1,3 +1,4 @@
+import './instrument';
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { AppModule } from './app.module';
@@ -7,6 +8,9 @@ import express from 'express';
 import { NestExpressApplication } from '@nestjs/platform-express';
 
 import { Logger } from 'nestjs-pino';
+
+import { HttpAdapterHost } from '@nestjs/core';
+import { SentryFilter } from './sentry.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -19,7 +23,11 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN || '*',
     credentials: true,
+    allowedHeaders: ['content-type', 'authorization', 'sentry-trace', 'baggage'],
   });
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new SentryFilter(httpAdapter));
 
   // BEGIN - BetterAuth workaround
   const expressApp = app.getHttpAdapter().getInstance();
